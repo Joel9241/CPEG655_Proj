@@ -28,6 +28,12 @@ Mat1D* initMat1D(bool init){
 	return m;
 }
 
+void printMat1D(Mat1D* mat){
+	for(int i = 0; i < N; i++){
+		printf("%f\n", mat->mat[i]);
+	}
+
+}
 void printMat2D(Mat2D* mat){
 	for(int i = 0; i < N; i++){
 		for(int j = 0; j < N; j++){
@@ -53,44 +59,106 @@ Mat2D* multiplyMats2D(Mat2D* a, Mat2D* b){
 	return c;
 }
 
+Mat1D* multiplyMats2D1D(Mat2D* a, Mat1D* b){
+	Mat1D* c = initMat1D(false);
+	for(int i = 0; i < N; i++){
+		float sum = 0;
+		for(int k = 0; k < N; k++){
+			float tmp1 = a->mat[(i * N) + k];
+			float tmp2 = b->mat[k];
+			sum += tmp1 * tmp2;
+		}
+		c->mat[i] = sum;
+	}
+	return c;
+}
+
+Mat2D* addMats2D(Mat2D* a, Mat2D* b){
+	Mat2D* c = initMat2D(false);
+	for(int i = 0; i < N * N; i++){
+		c->mat[i] = a->mat[i] + b->mat[i];
+	}
+	return c;
+}
+
+Mat2D* subMats2D(Mat2D* a, Mat2D* b){
+	Mat2D* c = initMat2D(false);
+	for(int i = 0; i < N * N; i++){
+		c->mat[i] = a->mat[i] - b->mat[i];
+	}
+	return c;
+}
+
+Mat1D* addMats1D(Mat1D* a, Mat1D* b){
+	Mat1D* c = initMat1D(false);
+	for(int i = 0; i < N; i++){
+		c->mat[i] = a->mat[i] + b->mat[i];
+	}
+	return c;
+}
+
+Mat1D* subMats1D(Mat1D* a, Mat1D* b){
+	Mat1D* c = initMat1D(false);
+	for(int i = 0; i < N; i++){
+		c->mat[i] = a->mat[i] - b->mat[i];
+	}
+	return c;
+}
+
+//Think this is not needed and it is wrong but leaving just in case
+float powerIteration(Mat2D* mat){
+	float epsilon = 0.5;
+	float sigma = 1.0;
+	Mat1D* x;
+	Mat1D* newx = initMat1D(true);
+	while(sigma > epsilon){
+		Mat1D* x = newx;
+		Mat1D* newx = multiplyMats2D1D(mat, x);
+		sigma = newx - x;
+		if(sigma < 0){
+			sigma = sigma * -1;
+		}
+	}
+	return newx->mat[0];
+}
+
+Mat1D* jacobiMethod(Mat2D* a, Mat1D* b, Mat1D* x){
+	Mat2D* dinv = initMat2D(false);
+	Mat2D* l = initMat2D(false);
+	Mat2D* u = initMat2D(false);
+	dluDecomp(a, dinv, l, u);
+	//Mat2D* check = multiplyMats2D(dinv, addMats2D(l, u));
+	//while(check < 1){
+	int i = 0;
+	while(i < 25){
+		x = jacobiIterate(dinv, l, u, b, x);
+		i++;
+		//check = multiplyMats2D(dinv, addMats2D(l, u));
+	}
+	return x;
+}
+
+Mat1D* jacobiIterate(Mat2D* dinv, Mat2D* l, Mat2D* u, Mat1D* b, Mat1D* x){
+	Mat2D* lu = addMats2D(l, u);
+	Mat1D* lux = multiplyMats2D1D(lu, x);
+	Mat1D* blux = subMats1D(b, lux);
+	x = multiplyMats2D1D(dinv, blux);
+	return x;
+}
+
 void dluDecomp(Mat2D* a, Mat2D* dinv, Mat2D* l, Mat2D* u){
-	//calc dinv
 	for(int i = 0; i < N; i++){
 		for(int j = 0; j < N; j++){
 			if(i == j){
 				dinv->mat[(i * N) + j] = 1 / a->mat[(i * N) + j];
 			}
+			else if(i > j){
+				dinv->mat[(i * N) + j] = 0;
+				l->mat[(i * N) + j] = a->mat[(i * N) + j];
+			}
 			else{
 				dinv->mat[(i * N) + j] = 0;
-			}
-		}
-	}
-	for(int i = 0; i < N; i++){
-		//calc l
-		for(int j = 0; j < N; j++){
-			if(j < i){
-				l->mat[(j * N) + i] = 0;
-			}
-			else{
-				l->mat[(j * N) + i] = a->mat[(j * N) + i];
-				for(int k = 0; k < i; k++){
-					l->mat[(j * N) + i] = l->mat[(j * N) + i] - l->mat[(j * N) + k] * u->mat[(k * N) + i];
-				}
-			}
-		}
-		//calc u
-		for(int j = 0; j < N; j++){
-			if(j < i){
-				u->mat[(i * N) + j] = 0;
-			}
-			else if(j == i){
-				u->mat[(i * N) + j] = 1;
-			}
-			else{
-				u->mat[(i * N) + j] = a->mat[(i * N) + j] / l->mat[(i * N) + i];
-				for(int k = 0; k < i; k++){
-					u->mat[(i * N) + j] = u->mat[(i * N) + j] - ((l->mat[(i * N) + k] * u->mat[(k * N) + j]) / l->mat[(i * N) + i]);
-				}
+				u->mat[(i * N) + j] = a->mat[(i * N) + j];
 			}
 		}
 	}
