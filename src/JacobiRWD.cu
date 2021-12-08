@@ -1,9 +1,9 @@
 #include "Jacobi.h"
 
 Mat2D* initMat2D(bool init){
-	Mat2D* m = malloc(sizeof(Mat2D*));
+	Mat2D* m = (Mat2D*) malloc(sizeof(Mat2D*));
 	m->size = N;
-	m->mat = malloc(sizeof(float) * N * N);
+	m->mat = (float*) malloc(sizeof(float) * N * N);
 	if(!init){
 		return m;
 	}
@@ -16,9 +16,9 @@ Mat2D* initMat2D(bool init){
 }
 
 Mat1D* initMat1D(bool init){
-	Mat1D* m = malloc(sizeof(Mat1D*));
+	Mat1D* m = (Mat1D*) malloc(sizeof(Mat1D*));
 	m->size = N;
-	m->mat = malloc(sizeof(float) * N);
+	m->mat = (float*) malloc(sizeof(float) * N);
 	if(!init){
 		return m;
 	}
@@ -43,106 +43,86 @@ void printMat2D(Mat2D* mat){
 	}
 }
 
-Mat2D* multiplyMats2D(Mat2D* a, Mat2D* b){
-	Mat2D* c = initMat2D(false);
-	for(int i = 0; i < N; i++){
-		for(int j = 0; j < N; j++){
+__global__ void multiplyMats2D(Mat2D* a, Mat2D* b, Mat2D* c){
+	int tx = threadIdx.x;
+	int ty = threadIdx.y;
+	int bx = blockIdx.x;
+	int by = blockIdx.y;
+	for(int i = 0; i < NB; i++){
+		for(int j = 0; j < NB; j++){
 			float sum = 0;
 			for(int k = 0; k < N; k++){
-				float tmp1 = a->mat[(i * N) + k];
-				float tmp2 = b->mat[(k * N) + j];
+				float tmp1 = a->mat[(by * N * NT * NB) + (ty * N * NB) + (j * N) + k];
+				float tmp2 = b->mat[(bx * NT * NB) + (tx * NB) + (k * N) + i];
 				sum += tmp1 * tmp2;
 			}
-			c->mat[(i * N) + j] = sum;
+			c->mat[(by * N * NT * NB) + (bx * NT * NB) + (ty * N * NB) + (j * N) + i + (tx * NB)] = sum;
 		}
 	}
-	return c;
 }
 
-Mat1D* multiplyMats2D1D(Mat2D* a, Mat1D* b){
-	Mat1D* c = initMat1D(false);
-	for(int i = 0; i < N; i++){
+__global__ void multiplyMats2D1D(Mat2D* a, Mat1D* b, Mat1D* c){
+	int tx = threadIdx.x;
+	int ty = threadIdx.y;
+	int bx = blockIdx.x;
+	int by = blockIdx.y;
+	for(int i = 0; i < NB; i++){
 		float sum = 0;
 		for(int k = 0; k < N; k++){
-			float tmp1 = a->mat[(i * N) + k];
-			float tmp2 = b->mat[k];
+			float tmp1 = a->mat[(by * N * NT * NB) + (ty * N * NB) + k];
+			float tmp2 = b->mat[(bx * NT * NB) + (tx * NB) + (k * N) + i];
 			sum += tmp1 * tmp2;
 		}
-		c->mat[i] = sum;
+		c->mat[(by * N * NT * NB) + (bx * NT * NB) + (ty * N * NB) + i + (tx * NB)] = sum;
 	}
-	return c;
 }
 
-Mat2D* addMats2D(Mat2D* a, Mat2D* b){
-	Mat2D* c = initMat2D(false);
+void addMats2D(Mat2D* a, Mat2D* b, Mat2D* c){
 	for(int i = 0; i < N * N; i++){
 		c->mat[i] = a->mat[i] + b->mat[i];
 	}
-	return c;
 }
 
-Mat2D* subMats2D(Mat2D* a, Mat2D* b){
-	Mat2D* c = initMat2D(false);
+void subMats2D(Mat2D* a, Mat2D* b, Mat2D* c){
 	for(int i = 0; i < N * N; i++){
 		c->mat[i] = a->mat[i] - b->mat[i];
 	}
-	return c;
 }
 
-Mat1D* addMats1D(Mat1D* a, Mat1D* b){
-	Mat1D* c = initMat1D(false);
+void addMats1D(Mat1D* a, Mat1D* b, Mat1D* c){
 	for(int i = 0; i < N; i++){
 		c->mat[i] = a->mat[i] + b->mat[i];
 	}
-	return c;
 }
 
-Mat1D* subMats1D(Mat1D* a, Mat1D* b){
-	Mat1D* c = initMat1D(false);
+void subMats1D(Mat1D* a, Mat1D* b, Mat1D* c){
 	for(int i = 0; i < N; i++){
 		c->mat[i] = a->mat[i] - b->mat[i];
 	}
-	return c;
-}
-
-//Think this is not needed and it is wrong but leaving just in case
-float powerIteration(Mat2D* mat){
-	float epsilon = 0.5;
-	float sigma = 1.0;
-	Mat1D* x;
-	Mat1D* newx = initMat1D(true);
-	while(sigma > epsilon){
-		Mat1D* x = newx;
-		Mat1D* newx = multiplyMats2D1D(mat, x);
-		sigma = newx - x;
-		if(sigma < 0){
-			sigma = sigma * -1;
-		}
-	}
-	return newx->mat[0];
 }
 
 Mat1D* jacobiMethod(Mat2D* a, Mat1D* b, Mat1D* x){
+	/*
 	Mat2D* dinv = initMat2D(false);
 	Mat2D* l = initMat2D(false);
 	Mat2D* u = initMat2D(false);
 	dluDecomp(a, dinv, l, u);
-	//Mat2D* check = multiplyMats2D(dinv, addMats2D(l, u));
-	//while(check < 1){
 	int i = 0;
 	while(i < 25){
 		x = jacobiIterate(dinv, l, u, b, x);
 		i++;
-		//check = multiplyMats2D(dinv, addMats2D(l, u));
 	}
+	*/
 	return x;
 }
 
 Mat1D* jacobiIterate(Mat2D* dinv, Mat2D* l, Mat2D* u, Mat1D* b, Mat1D* x){
+	/*
 	Mat2D* lu = addMats2D(l, u);
 	Mat1D* lux = multiplyMats2D1D(lu, x);
 	Mat1D* blux = subMats1D(b, lux);
 	x = multiplyMats2D1D(dinv, blux);
+	*/
 	return x;
 }
 
