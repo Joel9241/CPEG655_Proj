@@ -1,7 +1,7 @@
 CC=gcc
 CCFLAGS=-I$(SRCDIR)/ -DN=2
 GC=nvcc
-GCFLAGS=-I$(SRCDIR)/ -DN=2 -DNT=1 -DNB=1
+GCFLAGS=-I$(SRCDIR)/ -DN=2 -DNT=1 -DNB=1 -g
 OBJDIR=obj
 SRCDIR=src
 TESTDIR=tests
@@ -29,11 +29,11 @@ $(OBJDIR)/JacobiTests.o: $(SRCDIR)/Jacobi.h $(TESTDIR)/JacobiTests.c
 rwdTests: $(OBJDIR)/JacobiRWDTests.o $(OBJDIR)/JacobiRWD.o
 	$(GC) $(GCFLAGS) $(OBJDIR)/JacobiRWDTests.o $(OBJDIR)/JacobiRWD.o -o rwdTests
 
-$(OBJDIR)/JacobiRWDTests.o: $(SRCDIR)/JacobiRWD.h $(TESTDIR)/JacobiRWDTests.cu
+$(OBJDIR)/JacobiRWDTests.o: $(SRCDIR)/JacobiRWD.cuh $(TESTDIR)/JacobiRWDTests.cu
 	$(GC) $(GCFLAGS) -c $(TESTDIR)/JacobiRWDTests.cu
 	mv JacobiRWDTests.o $(OBJDIR)/
 
-$(OBJDIR)/JacobiRWD.o: $(SRCDIR)/JacobiRWD.h $(SRCDIR)/JacobiRWD.cu
+$(OBJDIR)/JacobiRWD.o: $(SRCDIR)/JacobiRWD.cuh $(SRCDIR)/JacobiRWD.cu
 	$(GC) $(GCFLAGS) -c $(SRCDIR)/JacobiRWD.cu
 	mv JacobiRWD.o $(OBJDIR)/
 
