@@ -1,6 +1,7 @@
 #include "Jacobi.h"
 
 void dluTest(){
+	/*
 	Mat2D *a = initMat2D(false);
 	Mat2D *dinv = initMat2D(false);
 	Mat2D *l = initMat2D(false);
@@ -21,9 +22,11 @@ void dluTest(){
 			exit(1);
 		}
 	}
+	*/
 }
 
 void multiplyMats2D1DTest(){
+	/*
 	Mat2D *a = initMat2D(false);
 	Mat1D *b = initMat1D(false);
 	
@@ -39,9 +42,26 @@ void multiplyMats2D1DTest(){
 		printf("multiplyMats2D1D unsuccessfull\n");
 		exit(1);
 	}
+	*/
+
+	Mat2D *a = initMat2D(false);
+	Mat1D *b = initMat1D(false);
+	for(int i = 0; i < N * N; i++){
+		a->mat[i] = i + 1;
+	}
+	for(int i = 0; i < N; i++){
+		b->mat[i] = i + 1;
+	}
+	Mat1D *c = multiplyMats2D1D(a, b);
+	if((c->mat[0] != 14) || (c->mat[1] != 32) || (c->mat[2] != 50)){
+		printf("multiplyMats2D1D unsuccessfull\n");
+		printMat1D(c);
+		exit(1);
+	}
 }
 
 void jacobiMethodTest(){
+	/*
 	Mat2D *a = initMat2D(false);
 	Mat1D *b = initMat1D(false);
 	Mat1D *x = initMat1D(false);
@@ -55,7 +75,7 @@ void jacobiMethodTest(){
 	x->mat[0] = 1;
 	x->mat[1] = 1;
 	x = jacobiMethod(a, b, x);
-
+	*/
 }
 
 int main(){

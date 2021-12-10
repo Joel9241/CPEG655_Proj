@@ -8,7 +8,7 @@ float* initMat2DHelper(bool init, bool host, int size){
 	float* m;
 	size_t sizeMat = sizeof(float) * size * size;
 	if(host){
-		cudaMallocHost((void **) &m, sizeMat);
+		m = (float*) malloc(sizeMat);
 	}
 	else{
 		cudaMalloc((void **) &m, sizeMat);
@@ -32,7 +32,7 @@ float* initMat1DHelper(bool init, bool host, int size){
 	float* m;
 	size_t sizeMat = sizeof(float) * size;
 	if(host){
-		cudaMallocHost((void **) &m, sizeMat);
+		m = (float*) malloc(sizeMat);
 	}
 	else{
 		cudaMalloc((void **) &m, sizeMat);
@@ -47,51 +47,77 @@ float* initMat1DHelper(bool init, bool host, int size){
 }
 
 void printMat1D(float* mat){
-	for(int i = 0; i < N; i++){
+	printMat1DHelper(mat, N);
+}
+
+void printMat1DHelper(float* mat, int size){
+	for(int i = 0; i < size; i++){
 		printf("%f\n", mat[i]);
 	}
-
 }
+
 void printMat2D(float* mat){
-	for(int i = 0; i < N; i++){
-		for(int j = 0; j < N; j++){
-			printf("%f ", mat[(i * N) + j]);
+	printMat2DHelper(mat, N);
+}
+
+void printMat2DHelper(float* mat, int size){
+	for(int i = 0; i < size; i++){
+		for(int j = 0; j < size; j++){
+			printf("%f ", mat[(i * size) + j]);
 		}
 		printf("\n");
 	}
 }
 
 __global__ void multiplyMats2D(float* a, float* b, float* c){
+	multiplyMats2DHelper(a, b, c, N, NT, NB);
+}
+
+__global__ void multiplyMats2DTB(float* a, float* b, float* c, int lN, int lNT, int lNB){
+	multiplyMats2DHelper(a, b, c, lN, lNT, lNB);
+}
+
+__device__ void multiplyMats2DHelper(float* a, float* b, float* c, int lN, int lNT, int lNB){
 	int tx = threadIdx.x;
 	int ty = threadIdx.y;
 	int bx = blockIdx.x;
 	int by = blockIdx.y;
-	for(int i = 0; i < NB; i++){
-		for(int j = 0; j < NB; j++){
+	for(int i = 0; i < lNB; i++){
+		for(int j = 0; j < lNB; j++){
 			float sum = 0;
-			for(int k = 0; k < N; k++){
-				float tmp1 = a[(by * N * NT * NB) + (ty * N * NB) + (j * N) + k];
-				float tmp2 = b[(bx * NT * NB) + (tx * NB) + (k * N) + i];
+			for(int k = 0; k < lN; k++){
+				float tmp1 = a[(by * lN * lNT * lNB) + (ty * lN * lNB) + (j * lN) + k];
+				float tmp2 = b[(bx * lNT * lNB) + (tx * lNB) + (k * lN) + i];
+				//printf("a: %d\n", (by * N * NT * NB) + (ty * N * NB) + (j * N) + k);
+				//printf("b: %d\n", (bx * NT * NB) + (tx * NB) + (k * N) + i);
 				sum += tmp1 * tmp2;
 			}
-			c[(by * N * NT * NB) + (bx * NT * NB) + (ty * N * NB) + (j * N) + i + (tx * NB)] = sum;
+			c[(by * lN * lNT * lNB) + (bx * lNT * lNB) + (ty * lN * lNB) + (j * lN) + i + (tx * lNB)] = sum;
+			//printf("c index %d\n", (by * N * NT * NB) + (bx * NT * NB) + (ty * N * NB) + (j * N) + i + (tx * NB));
 		}
 	}
 }
-
 __global__ void multiplyMats2D1D(float* a, float* b, float* c){
+	multiplyMats2D1DHelper(a, b, c, N, NT, NB);
+}
+
+__global__ void multiplyMats2D1DTB(float* a, float* b, float* c, int lN, int lNT, int lNB){
+	multiplyMats2D1DHelper(a, b, c, lN, lNT, lNB);
+}
+
+__device__ void multiplyMats2D1DHelper(float* a, float* b, float* c, int lN, int lNT, int lNB){
 	int tx = threadIdx.x;
 	int ty = threadIdx.y;
 	int bx = blockIdx.x;
 	int by = blockIdx.y;
-	for(int i = 0; i < NB; i++){
+	for(int i = 0; i < lNB; i++){
 		float sum = 0;
-		for(int k = 0; k < N; k++){
-			float tmp1 = a[(by * N * NT * NB) + (ty * N * NB) + k];
-			float tmp2 = b[(bx * NT * NB) + (tx * NB) + (k * N) + i];
+		for(int k = 0; k < lN; k++){
+			float tmp1 = a[(by * lN * lNT * lNB) + (tx * lN * lNB) + k];
+			float tmp2 = b[(by * lN * lNT * lNB) + (ty * lN * lNB) + k];
 			sum += tmp1 * tmp2;
 		}
-		c[(by * N * NT * NB) + (bx * NT * NB) + (ty * N * NB) + i + (tx * NB)] = sum;
+		c[(by * lN * lNT * lNB) + (bx * lNT * lNB) + (ty * lN * lNB) + i + (tx * lNB)] = sum;
 	}
 }
 
