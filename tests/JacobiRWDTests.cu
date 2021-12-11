@@ -24,72 +24,126 @@ void dluTest(){
 }
 
 void multiplyMats2D1DTest(){
-	dim3 threadPerBlock(3, 1);
-	dim3 blockPerGrid(1, 1);
-	
-	float *h_a = initMat2DHelper(false, true, 3);
-	float *h_b = initMat1DHelper(false, true, 3);
-	float *h_c = initMat1DHelper(false, true, 3);
-	
-	float *d_a = initMat2DHelper(false, false, 3);
-	float *d_b = initMat1DHelper(false, false, 3);
-	float *d_c = initMat1DHelper(false, false, 3);	
+	int testNum = 1;
+	float** params = (float**) malloc(sizeof(float*) * testNum);
+	float** answers = (float**) malloc(sizeof(float*) * testNum);
+	float params0[4] = {3, 3, 1, 1};
+	params[0] = params0;
+	float answers0[3] = {14, 32, 50};
+	answers[0] = answers0;
 
-	for(int i = 0; i < 9; i++){
-		h_a[i] = i + 1;
-	}
-	for(int i = 0; i < 3; i++){
-		h_b[i] = i + 1;
-	}
+	int lN;
+	int lNT;
+	int lNB;
+	int lNK;
+	float* h_a;
+	float* h_b;
+	float* h_c;
+	float* d_a;
+	float* d_b;
+	float* d_c;
+	size_t size1;
+	size_t size2;
+	for(int i = 0; i < testNum; i++){
+		lN = params[i][0];
+		lNT = params[i][1];
+		lNB = params[i][2];
+		lNK = params[i][3];
+		dim3 threadPerBlock(lNT, 1);
+		dim3 blockPerGrid(lNK, lNK);
+		
+		h_a = initMat2DHelper(false, true, lN);
+		h_b = initMat1DHelper(false, true, lN);
+		h_c = initMat1DHelper(false, true, lN);
+		
+		d_a = initMat2DHelper(false, false, lN);
+		d_b = initMat1DHelper(false, false, lN);
+		d_c = initMat1DHelper(false, false, lN);	
 
-	size_t size1 = N * N * sizeof(float);
-	size_t size2 = N * sizeof(float);
+		for(int j = 0; j < lN * lN; j++){
+			h_a[j] = j + 1;
+		}
+		for(int j = 0; j < lN; j++){
+			h_b[j] = j + 1;
+		}
 
-	cudaMemcpy(d_a, h_a, size1, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_b, h_b, size2, cudaMemcpyHostToDevice);
+		size1 = lN * lN * sizeof(float);
+		size2 = lN * sizeof(float);
 
-	multiplyMats2D1DTB<<<blockPerGrid, threadPerBlock>>>(d_a, d_b, d_c, 3, 1, 1);
-	cudaMemcpy(h_c, d_c, size2, cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
-	if((h_c[0] != 14) || (h_c[1] != 32) || (h_c[2] != 50)){
-		printf("multiplyMats2D1D unsuccessfull\n");
-		printMat1DHelper(h_c, 3);
-		exit(1);
+		cudaMemcpy(d_a, h_a, size1, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_b, h_b, size2, cudaMemcpyHostToDevice);
+
+		multiplyMats2D1DTB<<<blockPerGrid, threadPerBlock>>>(d_a, d_b, d_c, lN, lNT, lNB);
+		cudaMemcpy(h_c, d_c, size2, cudaMemcpyDeviceToHost);
+		cudaDeviceSynchronize();
+		
+		for(int j = 0; j < lN; j++){
+			if(h_c[j] != answers[i][j]){
+				printf("multiplyMats2D1D test failed\n");
+				printMat1DHelper(h_c, lN);
+				exit(1);
+			}
+		}
 	}
 }
 
 void multiplyMats2DTest(){
-	dim3 threadPerBlock(3, 3);
-	dim3 blockPerGrid(1, 1);
-	
-	float *h_a = initMat2DHelper(false, true, 3);
-	float *h_b = initMat2DHelper(false, true, 3);
-	float *h_c = initMat2DHelper(false, true, 3);
-	
-	float *d_a = initMat2DHelper(false, false, 3);
-	float *d_b = initMat2DHelper(false, false, 3);
-	float *d_c = initMat2DHelper(false, false, 3);	
+	int testNum = 1;
+	float** params = (float**) malloc(sizeof(float*) * testNum);
+	float** answers = (float**) malloc(sizeof(float*) * testNum);
+	float params0[4] = {3, 3, 1, 1};
+	params[0] = params0;
+	float answer0[9] = {30, 36, 42, 66, 81, 96, 102, 126, 150};
+	answers[0] = answer0;
 
-	for(int i = 0; i < 9; i++){
-		h_a[i] = i + 1;
-	}
-	for(int i = 0; i < 9; i++){
-		h_b[i] = i + 1;
-	}
+	int lN;
+	int lNT;
+	int lNB;
+	int lNK;
+	float* h_a;
+	float* h_b;
+	float* h_c;
+	float* d_a;
+	float* d_b;
+	float* d_c;
+	size_t size;
+	for(int i = 0; i < testNum; i++){
+		lN = params[i][0];
+		lNT = params[i][1];
+		lNB = params[i][2];
+		lNK = params[i][3];
+		dim3 threadPerBlock(lNT, lNT);
+		dim3 blockPerGrid(lNK, lNK);
+		
+		h_a = initMat2DHelper(false, true, lN);
+		h_b = initMat2DHelper(false, true, lN);
+		h_c = initMat2DHelper(false, true, lN);
+		
+		d_a = initMat2DHelper(false, false, lN);
+		d_b = initMat2DHelper(false, false, lN);
+		d_c = initMat2DHelper(false, false, lN);	
 
-	size_t size = N * N * sizeof(float);
-	cudaMemcpy(d_a, h_a, size, cudaMemcpyHostToDevice);
-	cudaMemcpy(d_b, h_b, size, cudaMemcpyHostToDevice);
+		for(int j = 0; j < lN * lN; j++){
+			h_a[j] = j + 1;
+			h_b[j] = j + 1;
+		}
 
-	multiplyMats2DTB<<<blockPerGrid, threadPerBlock>>>(d_a, d_b, d_c, 3, 1, 1);
-	cudaMemcpy(h_c, d_c, size, cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
-	float ctb[9] = {30, 36, 42, 66, 81, 96, 102, 126, 150};
-	for(int i = 0; i < 9; i++){
-		if(h_c[i] != ctb[i]){
-			printf("multiplyMats2D1D unsuccessfull\n");
-			printMat2DHelper(h_c, 3);
-			exit(1);
+		size = lN * lN * sizeof(float);
+
+		cudaMemcpy(d_a, h_a, size, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_b, h_b, size, cudaMemcpyHostToDevice);
+
+		multiplyMats2DTB<<<blockPerGrid, threadPerBlock>>>(d_a, d_b, d_c, lN, lNT, lNB);
+		cudaMemcpy(h_c, d_c, size, cudaMemcpyDeviceToHost);
+		cudaDeviceSynchronize();
+		
+		for(int j = 0; j < lN * lN; j++){
+			if(h_c[j] != answers[i][j]){
+				printf("val[i][j]: %f\n", answers[i][j]);
+				printf("multiplyMats2D test failed\n");
+				printMat2DHelper(h_c, lN);
+				exit(1);
+			}
 		}
 	}
 }
@@ -114,12 +168,9 @@ void jacobiMethodTest(){
 
 int main(){
 	printf("Running Tests\n");
-	//dluTest();
-	//multiplyMats2D1DTest();
+	dluTest();
+	multiplyMats2D1DTest();
 	multiplyMats2DTest();
-	//cuda_hello<<<1, 1>>>();
-	
-
 	/*
 	jacobiMethodTest();
 	*/
