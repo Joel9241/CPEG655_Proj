@@ -88,12 +88,9 @@ __device__ void multiplyMats2DHelper(float* a, float* b, float* c, int lN, int l
 			for(int k = 0; k < lN; k++){
 				float tmp1 = a[(by * lN * lNT * lNB) + (ty * lN * lNB) + (j * lN) + k];
 				float tmp2 = b[(bx * lNT * lNB) + (tx * lNB) + (k * lN) + i];
-				//printf("a: %d\n", (by * N * NT * NB) + (ty * N * NB) + (j * N) + k);
-				//printf("b: %d\n", (bx * NT * NB) + (tx * NB) + (k * N) + i);
 				sum += tmp1 * tmp2;
 			}
 			c[(by * lN * lNT * lNB) + (bx * lNT * lNB) + (ty * lN * lNB) + (j * lN) + i + (tx * lNB)] = sum;
-			//printf("c index %d\n", (by * N * NT * NB) + (bx * NT * NB) + (ty * N * NB) + (j * N) + i + (tx * NB));
 		}
 	}
 }
@@ -121,53 +118,75 @@ __device__ void multiplyMats2D1DHelper(float* a, float* b, float* c, int lN, int
 	}
 }
 
-void addMats2D(float* a, float* b, float* c){
-	for(int i = 0; i < N * N; i++){
+__global__ void addMats2D(float* a, float* b, float* c){
+	addMatsHelper(a, b, c, N * N, NT, NB);
+}
+
+__global__ void addMats2DTB(float* a, float* b, float* c, int lN, int lNT, int lNB){
+	addMatsHelper(a, b, c, lN * lN, lNT, lNB);
+}
+
+__global__ void addMats1D(float* a, float* b, float* c){
+	addMatsHelper(a, b, c, N, NT, NB);
+}
+
+__global__ void addMats1DTB(float* a, float* b, float* c, int lN, int lNT, int lNB){
+	addMatsHelper(a, b, c, lN, lNT, lNB);
+}
+
+__device__ void addMatsHelper(float* a, float* b, float* c, int lN, int lNT, int lNB){
+	for(int i = 0; i < lN; i++){
 		c[i] = a[i] + b[i];
 	}
 }
 
-void subMats2D(float* a, float* b, float* c){
-	for(int i = 0; i < N * N; i++){
+__global__ void subMats2D(float* a, float* b, float* c){
+	subMatsHelper(a, b, c, N * N, NT, NB);
+}
+
+__global__ void subMats2DTB(float* a, float* b, float* c, int lN, int lNT, int lNB){
+	subMatsHelper(a, b, c, lN * lN, lNT, lNB);
+}
+
+__global__ void subMats1D(float* a, float* b, float* c){
+	subMatsHelper(a, b, c, N, NT, NB);
+}
+
+__global__ void subMats1DTB(float* a, float* b, float* c, int lN, int lNT, int lNB){
+	subMatsHelper(a, b, c, lN, lNT, lNB);
+}
+
+__device__ void subMatsHelper(float* a, float* b, float* c, int lN, int lNT, int lNB){
+	for(int i = 0; i < lN; i++){
 		c[i] = a[i] - b[i];
 	}
 }
 
-void addMats1D(float* a, float* b, float* c){
-	for(int i = 0; i < N; i++){
-		c[i] = a[i] + b[i];
-	}
+__global__ void jacobiMethod(float* a, float* b, float* x, float* dinv, float* l, float* u){
+	jacobiMethodHelper(a, b, x, dinv, l, u, N, NT, NB);
 }
 
-void subMats1D(float* a, float* b, float* c){
-	for(int i = 0; i < N; i++){
-		c[i] = a[i] - b[i];
-	}
+__global__ void jacobiMethodTB(float* a, float* b, float* x, float* dinv, float* l, float* u, int lN, int lNT, int lNB){
+	jacobiMethodHelper(a, b, x, dinv, l, u, lN, lNT, lNB);
 }
 
-float* jacobiMethod(float* a, float* b, float* x){
-	/*
-	Mat2D* dinv = initMat2D(false);
-	Mat2D* l = initMat2D(false);
-	Mat2D* u = initMat2D(false);
-	dluDecomp(a, dinv, l, u);
+__device__ void jacobiMethodHelper(float* a, float* b, float* x, float* dinv, float* l, float* u, int lN, int lNT, int lNB){
 	int i = 0;
 	while(i < 25){
-		x = jacobiIterate(dinv, l, u, b, x);
+		jacobiIterate(dinv, l, u, b, x, lN, lNT, lNB);
+		cudaDeviceSynchronize();
 		i++;
 	}
-	*/
-	return x;
 }
 
-float* jacobiIterate(float* dinv, float* l, float* u, float* b, float* x){
-	/*
-	Mat2D* lu = addMats2D(l, u);
-	Mat1D* lux = multiplyMats2D1D(lu, x);
-	Mat1D* blux = subMats1D(b, lux);
-	x = multiplyMats2D1D(dinv, blux);
-	*/
-	return x;
+__device__ void jacobiIterate(float* dinv, float* l, float* u, float* b, float* x, int lN, int lNT, int lNB){
+	float* lu = initMat2DHelper(false, false, lN);
+	addMats2DTB(l, u, lu, lN, lNT, lNB);
+	float* lux = initMat1DHelper(false, false, lN);
+	multiplyMats2D1DHelper(lu, x, lux, lN, lNT, lNB);
+	float* blux = initMat1DHelper(false, false, lN);
+	subMatsHelper(b, lux, blux, lN, lNT, lNB);
+	multiplyMats2D1DHelper(dinv, blux, x, lN, lNT, lNB);
 }
 
 void dluDecomp(float* a, float* dinv, float* l, float* u){

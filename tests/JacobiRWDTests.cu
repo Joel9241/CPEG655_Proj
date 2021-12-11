@@ -139,7 +139,6 @@ void multiplyMats2DTest(){
 		
 		for(int j = 0; j < lN * lN; j++){
 			if(h_c[j] != answers[i][j]){
-				printf("val[i][j]: %f\n", answers[i][j]);
 				printf("multiplyMats2D test failed\n");
 				printMat2DHelper(h_c, lN);
 				exit(1);
@@ -150,9 +149,9 @@ void multiplyMats2DTest(){
 
 void jacobiMethodTest(){
 	/*
-	Mat2D *a = initMat2D(false);
-	Mat1D *b = initMat1D(false);
-	Mat1D *x = initMat1D(false);
+	float* h_a = initMat2D(false, true, 2);
+	float* h_b = initMat1D(false, true, 2);
+	float* h_x = initMat1D(false, true, 2);
 
 	a->mat[0] = 2;
 	a->mat[1] = 1;
@@ -164,6 +163,68 @@ void jacobiMethodTest(){
 	x->mat[1] = 1;
 	x = jacobiMethod(a, b, x);
 	*/
+
+	int testNum = 1;
+	float** params = (float**) malloc(sizeof(float*) * testNum);
+	float** answers = (float**) malloc(sizeof(float*) * testNum);
+	float params0[4] = {3, 3, 1, 1};
+	params[0] = params0;
+	float answer0[9] = {30, 36, 42, 66, 81, 96, 102, 126, 150};
+	answers[0] = answer0;
+
+	int lN;
+	int lNT;
+	int lNB;
+	int lNK;
+	for(int i = 0; i < testNum; i++){
+		lN = params[i][0];
+		lNT = params[i][1];
+		lNB = params[i][2];
+		lNK = params[i][3];
+		dim3 threadPerBlock(lNT, lNT);
+		dim3 blockPerGrid(lNK, lNK);
+		
+		float* h_a = initMat2DHelper(false, true, lN);
+		float* h_b = initMat1DHelper(false, true, lN);
+		float* h_x = initMat1DHelper(false, true, lN);
+		float* h_dinv = initMat2DHelper(false, true, lN);
+		float* h_l = initMat2DHelper(false, true, lN);
+		float* h_u = initMat2DHelper(false, true, lN);
+		
+		float* d_a = initMat2DHelper(false, false, lN);
+		float* d_b = initMat1DHelper(false, false, lN);
+		float* d_x = initMat1DHelper(false, false, lN);
+		float* d_dinv = initMat2DHelper(false, false, lN);
+		float* d_l = initMat2DHelper(false, false, lN);
+		float* d_u = initMat2DHelper(false, false, lN);
+
+		for(int j = 0; j < lN * lN; j++){
+			h_a[j] = j + 1;
+			h_b[j] = j + 1;
+		}
+
+		size_t size1 = lN * lN * sizeof(float);
+		size_t size2 = lN * sizeof(float);
+
+		cudaMemcpy(d_a, h_a, size1, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_b, h_b, size2, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_x, h_x, size2, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_dinv, h_dinv, size1, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_l, h_l, size1, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_u, h_u, size1, cudaMemcpyHostToDevice);
+
+		jacobiMethodTB<<<blockPerGrid, threadPerBlock>>>(d_a, d_b, d_x, d_dinv, d_l, d_u, lN, lNT, lNB);
+		cudaMemcpy(h_x, d_x, size2, cudaMemcpyDeviceToHost);
+		cudaDeviceSynchronize();
+		
+		for(int j = 0; j < lN * lN; j++){
+			if(h_x[j] != answers[i][j]){
+				printf("Jacobi Method test failed\n");
+				printMat1DHelper(h_x, lN);
+				exit(1);
+			}
+		}
+	}
 }
 
 int main(){
