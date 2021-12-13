@@ -1,22 +1,22 @@
 #include "JacobiRWD.cuh"
 
 void dluTest(){
-	float *a = initMat2D(false, true);
-	float *dinv = initMat2D(false, true);
-	float *l = initMat2D(false, true);
-	float *u = initMat2D(false, true);
+	float *a = initMat2DHelper(false, true, 2);
+	float *dinv = initMat2DHelper(false, true, 2);
+	float *l = initMat2DHelper(false, true, 2);
+	float *u = initMat2DHelper(false, true, 2);
 	
-	a[0] = 2;
-	a[1] = 1;
-	a[2] = 5;
-	a[3] = 7;
+	a[0] = 2.0;
+	a[1] = 1.0;
+	a[2] = 5.0;
+	a[3] = 7.0;
 	
-	dluDecomp(a, dinv, l, u);
-	for(int i = 0; i < N; i++){
+	dluDecompTB(a, dinv, l, u, 2, 0, 0);
+	for(int i = 0; i < 4; i++){
 		if(dinv[i] != 0){
 			dinv[i] = 1 / dinv[i];
 		}
-		if(a[i] != dinv[i] + l[i] + u[i]){
+		if(abs(a[i] - (dinv[i] + l[i] + u[i])) > 0.01){
 			printf("LU decomposition unsuccessfull\n");
 			exit(1);
 		}
@@ -148,28 +148,22 @@ void multiplyMats2DTest(){
 }
 
 void jacobiMethodTest(){
-	/*
-	float* h_a = initMat2D(false, true, 2);
-	float* h_b = initMat1D(false, true, 2);
-	float* h_x = initMat1D(false, true, 2);
-
-	a->mat[0] = 2;
-	a->mat[1] = 1;
-	a->mat[2] = 5;
-	a->mat[3] = 7;
-	b->mat[0] = 11;
-	b->mat[1] = 13;
-	x->mat[0] = 1;
-	x->mat[1] = 1;
-	x = jacobiMethod(a, b, x);
-	*/
-
 	int testNum = 1;
 	float** params = (float**) malloc(sizeof(float*) * testNum);
+	float** avals = (float**) malloc(sizeof(float*) * testNum);
+	float** bvals = (float**) malloc(sizeof(float*) * testNum);
+	float** xvals = (float**) malloc(sizeof(float*) * testNum);
 	float** answers = (float**) malloc(sizeof(float*) * testNum);
+	//Test 1
 	float params0[4] = {3, 3, 1, 1};
 	params[0] = params0;
-	float answer0[9] = {30, 36, 42, 66, 81, 96, 102, 126, 150};
+	float avals0[9] = {4, -1, -1, -2, 6, 1, -1, 1, 7};
+	avals[0] = avals0;
+	float bvals0[3] = {3, 9, -6};
+	bvals[0] = bvals0;
+	float xvals0[3] = {0, 0, 0};
+	xvals[0] = xvals0;
+	float answer0[3] = {1, 2, -1};
 	answers[0] = answer0;
 
 	int lN;
@@ -181,6 +175,7 @@ void jacobiMethodTest(){
 		lNT = params[i][1];
 		lNB = params[i][2];
 		lNK = params[i][3];
+		/*
 		dim3 threadPerBlock(lNT, lNT);
 		dim3 blockPerGrid(lNK, lNK);
 		
@@ -190,6 +185,9 @@ void jacobiMethodTest(){
 		float* h_dinv = initMat2DHelper(false, true, lN);
 		float* h_l = initMat2DHelper(false, true, lN);
 		float* h_u = initMat2DHelper(false, true, lN);
+		float* h_lu = initMat2DHelper(false, true, lN);
+		float* h_lux = initMat1DHelper(false, true, lN);
+		float* h_blux = initMat1DHelper(false, true, lN);
 		
 		float* d_a = initMat2DHelper(false, false, lN);
 		float* d_b = initMat1DHelper(false, false, lN);
@@ -197,12 +195,21 @@ void jacobiMethodTest(){
 		float* d_dinv = initMat2DHelper(false, false, lN);
 		float* d_l = initMat2DHelper(false, false, lN);
 		float* d_u = initMat2DHelper(false, false, lN);
+		float* d_lu = initMat2DHelper(false, true, lN);
+		float* d_lux = initMat1DHelper(false, true, lN);
+		float* d_blux = initMat1DHelper(false, true, lN);
 
 		for(int j = 0; j < lN * lN; j++){
-			h_a[j] = j + 1;
-			h_b[j] = j + 1;
+			h_a[j] = avals[0][j];
+		}
+		
+		for(int j = 0; j < lN; j++){
+			h_b[j] = bvals[0][j];
+			h_x[j] = xvals[0][j];
 		}
 
+		dluDecompTB(h_a, h_dinv, h_l, h_u, lN, lNT, lNB);
+	
 		size_t size1 = lN * lN * sizeof(float);
 		size_t size2 = lN * sizeof(float);
 
@@ -212,18 +219,24 @@ void jacobiMethodTest(){
 		cudaMemcpy(d_dinv, h_dinv, size1, cudaMemcpyHostToDevice);
 		cudaMemcpy(d_l, h_l, size1, cudaMemcpyHostToDevice);
 		cudaMemcpy(d_u, h_u, size1, cudaMemcpyHostToDevice);
-
-		jacobiMethodTB<<<blockPerGrid, threadPerBlock>>>(d_a, d_b, d_x, d_dinv, d_l, d_u, lN, lNT, lNB);
-		cudaMemcpy(h_x, d_x, size2, cudaMemcpyDeviceToHost);
-		cudaDeviceSynchronize();
+		cudaMemcpy(d_lu, h_lu, size1, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_lux, h_lux, size2, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_blux, h_blux, size2, cudaMemcpyHostToDevice);
+		*/
+		clock_t begin = clock();
+		jacobiMethodTB(avals[i], bvals[i], xvals[i], lN, lNT, lNB, lNK);
+		//cudaMemcpy(h_x, d_x, size2, cudaMemcpyDeviceToHost);
+		//cudaDeviceSynchronize();
+		clock_t end = clock();
 		
-		for(int j = 0; j < lN * lN; j++){
-			if(h_x[j] != answers[i][j]){
+		for(int j = 0; j < lN; j++){
+			if(xvals[i][j] != answers[i][j]){
 				printf("Jacobi Method test failed\n");
-				printMat1DHelper(h_x, lN);
-				exit(1);
+				printMat1DHelper(xvals[i], lN);
+				//exit(1);
 			}
 		}
+		printf("Time elapsed is %f\n", (double) (end - begin) / CLOCKS_PER_SEC);
 	}
 }
 
@@ -232,9 +245,7 @@ int main(){
 	dluTest();
 	multiplyMats2D1DTest();
 	multiplyMats2DTest();
-	/*
 	jacobiMethodTest();
-	*/
 	printf("If you got here all tests passed\n");
 	return 0;
 }
