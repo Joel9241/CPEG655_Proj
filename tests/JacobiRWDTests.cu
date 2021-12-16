@@ -175,58 +175,9 @@ void jacobiMethodTest(){
 		lNT = params[i][1];
 		lNB = params[i][2];
 		lNK = params[i][3];
-		/*
-		dim3 threadPerBlock(lNT, lNT);
-		dim3 blockPerGrid(lNK, lNK);
-		
-		float* h_a = initMat2DHelper(false, true, lN);
-		float* h_b = initMat1DHelper(false, true, lN);
-		float* h_x = initMat1DHelper(false, true, lN);
-		float* h_dinv = initMat2DHelper(false, true, lN);
-		float* h_l = initMat2DHelper(false, true, lN);
-		float* h_u = initMat2DHelper(false, true, lN);
-		float* h_lu = initMat2DHelper(false, true, lN);
-		float* h_lux = initMat1DHelper(false, true, lN);
-		float* h_blux = initMat1DHelper(false, true, lN);
-		
-		float* d_a = initMat2DHelper(false, false, lN);
-		float* d_b = initMat1DHelper(false, false, lN);
-		float* d_x = initMat1DHelper(false, false, lN);
-		float* d_dinv = initMat2DHelper(false, false, lN);
-		float* d_l = initMat2DHelper(false, false, lN);
-		float* d_u = initMat2DHelper(false, false, lN);
-		float* d_lu = initMat2DHelper(false, true, lN);
-		float* d_lux = initMat1DHelper(false, true, lN);
-		float* d_blux = initMat1DHelper(false, true, lN);
-
-		for(int j = 0; j < lN * lN; j++){
-			h_a[j] = avals[0][j];
-		}
-		
-		for(int j = 0; j < lN; j++){
-			h_b[j] = bvals[0][j];
-			h_x[j] = xvals[0][j];
-		}
-
-		dluDecompTB(h_a, h_dinv, h_l, h_u, lN, lNT, lNB);
-	
-		size_t size1 = lN * lN * sizeof(float);
-		size_t size2 = lN * sizeof(float);
-
-		cudaMemcpy(d_a, h_a, size1, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_b, h_b, size2, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_x, h_x, size2, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_dinv, h_dinv, size1, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_l, h_l, size1, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_u, h_u, size1, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_lu, h_lu, size1, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_lux, h_lux, size2, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_blux, h_blux, size2, cudaMemcpyHostToDevice);
-		*/
 		clock_t begin = clock();
 		jacobiMethodTB(avals[i], bvals[i], xvals[i], lN, lNT, lNB, lNK);
-		//cudaMemcpy(h_x, d_x, size2, cudaMemcpyDeviceToHost);
-		//cudaDeviceSynchronize();
+		cudaDeviceSynchronize();
 		clock_t end = clock();
 		
 		for(int j = 0; j < lN; j++){

@@ -196,9 +196,9 @@ __host__ void jacobiMethodTB(float* h_a, float* h_b, float* h_x, int lN, int lNT
 	float* d_dinv = initMat2DHelper(false, false, lN);
 	float* d_l = initMat2DHelper(false, false, lN);
 	float* d_u = initMat2DHelper(false, false, lN);
-	float* d_lu = initMat2DHelper(false, true, lN);
-	float* d_lux = initMat1DHelper(false, true, lN);
-	float* d_blux = initMat1DHelper(false, true, lN);
+	float* d_lu = initMat2DHelper(false, false, lN);
+	float* d_lux = initMat1DHelper(false, false, lN);
+	float* d_blux = initMat1DHelper(false, false, lN);
 	
 	dluDecompTB(h_a, h_dinv, h_l, h_u, lN, lNT, lNB);
 
@@ -215,20 +215,24 @@ __host__ void jacobiMethodTB(float* h_a, float* h_b, float* h_x, int lN, int lNT
 	cudaMemcpy(d_lux, h_lux, size2, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_blux, h_blux, size2, cudaMemcpyHostToDevice);
 
+
 	int i = 0;
 	while(i < 25){
 		//printf("hello world\n");
-		addMats2DTB<<<blockPerGrid, threadPerBlock>>>(d_l, d_u, d_lu, lN, lNT, lNB);
+		
+		addMats2DTB<<<1, 1>>>(d_l, d_u, d_lu, lN, lNT, lNB);
+		//addMats2DTB<<<blockPerGrid, threadPerBlock>>>(d_l, d_u, d_lu, lN, lNT, lNB);
 		cudaDeviceSynchronize();
 		multiplyMats2D1DTB<<<blockPerGrid, threadPerBlock>>>(d_lu, d_x, d_lux, lN, lNT, lNB);
 		cudaDeviceSynchronize();
-		subMats1DTB<<<blockPerGrid, threadPerBlock>>>(d_b, d_lux, d_blux, lN, lNT, lNB);
+		subMats1DTB<<<1, 1>>>(d_b, d_lux, d_blux, lN, lNT, lNB);
 		cudaDeviceSynchronize();
 		multiplyMats2D1DTB<<<blockPerGrid, threadPerBlock>>>(d_dinv, d_blux, d_x, lN, lNT, lNB);
 		cudaDeviceSynchronize();
 		i++;
 	}
 	cudaMemcpy(h_x, d_x, size2, cudaMemcpyDeviceToHost);
+	//cudaMemcpy(h_x, d_x, size2, cudaMemcpyDeviceToHost);
 	cudaDeviceSynchronize();
 }
 
