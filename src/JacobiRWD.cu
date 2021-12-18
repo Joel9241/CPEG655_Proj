@@ -107,14 +107,18 @@ __device__ void multiplyMats2D1DHelper(float* a, float* b, float* c, int lN, int
 	int ty = threadIdx.y;
 	int bx = blockIdx.x;
 	int by = blockIdx.y;
-	for(int i = 0; i < lNB; i++){
+	
+	if((ty > 0) || (by > 0)){
+		return;
+	}
+	for(int i = 0; i < lNB * lNB; i++){
 		float sum = 0;
 		for(int k = 0; k < lN; k++){
-			float tmp1 = a[(by * lN * lNT * lNB) + (tx * lN * lNB) + k];
-			float tmp2 = b[(by * lN * lNT * lNB) + (ty * lN * lNB) + k];
+			float tmp1 = a[(bx * lN * lNT * lNB) + (tx * lN * lNB) + (i * lN) + k];
+			float tmp2 = b[k];
 			sum += tmp1 * tmp2;
 		}
-		c[(by * lN * lNT * lNB) + (bx * lNT * lNB) + (ty * lN * lNB) + i + (tx * lNB)] = sum;
+		c[(bx * lNT * lNB) + i + (tx * lNB)] = sum;
 	}
 }
 
@@ -162,21 +166,8 @@ __device__ void subMatsHelper(float* a, float* b, float* c, int lN, int lNT, int
 	}
 }
 
-__global__ void jacobiMethod(float* a, float* b, float* x, float* dinv, float* l, float* u){
-	/*
-	int i = 0;
-	while(i < 25){
-		float* lu = initMat2DHelper(false, false, N);
-		addMatsHelper(l, u, lu, N * N, NT, NB);
-		float* lux = initMat1DHelper(false, false, N);
-		multiplyMats2D1DHelper(lu, x, lux, N, NT, NB);
-		float* blux = initMat1DHelper(false, false, N);
-		subMatsHelper(b, lux, blux, N, NT, NB);
-		multiplyMats2D1DHelper(dinv, blux, x, N, NT, NB);
-		cudaDeviceSynchronize();
-		i++;
-	}
-	*/
+__host__ void jacobiMethod(float* a, float* b, float* x, float* dinv, float* l, float* u){
+	jacobiMethodTB(a, b, x, N, NT, NB, NK);
 }
 
 __host__ void jacobiMethodTB(float* h_a, float* h_b, float* h_x, int lN, int lNT, int lNB, int lNK){
@@ -215,13 +206,9 @@ __host__ void jacobiMethodTB(float* h_a, float* h_b, float* h_x, int lN, int lNT
 	cudaMemcpy(d_lux, h_lux, size2, cudaMemcpyHostToDevice);
 	cudaMemcpy(d_blux, h_blux, size2, cudaMemcpyHostToDevice);
 
-
 	int i = 0;
 	while(i < 25){
-		//printf("hello world\n");
-		
 		addMats2DTB<<<1, 1>>>(d_l, d_u, d_lu, lN, lNT, lNB);
-		//addMats2DTB<<<blockPerGrid, threadPerBlock>>>(d_l, d_u, d_lu, lN, lNT, lNB);
 		cudaDeviceSynchronize();
 		multiplyMats2D1DTB<<<blockPerGrid, threadPerBlock>>>(d_lu, d_x, d_lux, lN, lNT, lNB);
 		cudaDeviceSynchronize();
@@ -232,26 +219,11 @@ __host__ void jacobiMethodTB(float* h_a, float* h_b, float* h_x, int lN, int lNT
 		i++;
 	}
 	cudaMemcpy(h_x, d_x, size2, cudaMemcpyDeviceToHost);
-	//cudaMemcpy(h_x, d_x, size2, cudaMemcpyDeviceToHost);
-	cudaDeviceSynchronize();
+	//cudaDeviceSynchronize();
 }
 
 void dluDecomp(float* a, float* dinv, float* l, float* u){
-	for(int i = 0; i < N; i++){
-		for(int j = 0; j < N; j++){
-			if(i == j){
-				dinv[(i * N) + j] = 1 / a[(i * N) + j];
-			}
-			else if(i > j){
-				dinv[(i * N) + j] = 0;
-				l[(i * N) + j] = a[(i * N) + j];
-			}
-			else{
-				dinv[(i * N) + j] = 0;
-				u[(i * N) + j] = a[(i * N) + j];
-			}
-		}
-	}
+	dluDecompTB(a, dinv, l, u, N, NT, NB);
 }
 
 void dluDecompTB(float* a, float* dinv, float* l, float* u, int lN, int lNT, int lNB){

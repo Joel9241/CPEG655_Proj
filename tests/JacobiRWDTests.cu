@@ -24,24 +24,53 @@ void dluTest(){
 }
 
 void multiplyMats2D1DTest(){
-	int testNum = 1;
+	int testNum = 2;
 	float** params = (float**) malloc(sizeof(float*) * testNum);
+	float** avals = (float**) malloc(sizeof(float*) * testNum);
+	float** bvals = (float**) malloc(sizeof(float*) * testNum);
 	float** answers = (float**) malloc(sizeof(float*) * testNum);
+	
+	//Test 1
 	float params0[4] = {3, 3, 1, 1};
 	params[0] = params0;
+	float avals0[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+	avals[0] = avals0;
+	float bvals0[3] = {1, 2, 3};
+	bvals[0] = bvals0;
 	float answers0[3] = {14, 32, 50};
 	answers[0] = answers0;
+
+	//Test 2
+	float params1[4] = {16, 4, 1, 4};
+	params[1] = params1;
+	float avals1[16 * 16] = {
+						90, 9, 6, 4, 1, -5, 3, 9, 0, -3, 1, 5, 7, -9, 3, 2,
+						3, 86, 4, 5, 7, 8, 3, 3, 4, 5, 6, 0, -3, 2, 3, 9,
+						-5, 2, 89, 1, 4, 5, -2, -8, 7, 3, 4, 5, 2, 1, -1, 8,
+						9, 9, 8, 69, -7, 2, 1, 8, 7, 2, 4, -9, 1, 1, 0, 0,
+						3, 4, 1, 8, 95, 6, 5, 9, 8, 7, 6, 5, 4, -2, 3, 1,
+						3, 2, 1, 8, 7, 87, 5, 2, 1, 4, 9, 8, 9, 2, 1, 0,
+						3, 4, 1, 2, 3, 4, 91, 1, 9, 8, 7, 6, 5, 6, 7, 2,
+						1, 1, 1, 3, 4, 2, 4, 92, 2, 1, -8, 2, 3, 2, 2, 1,
+						0, 0, 0, 1, 1, 3, -2, 5, 93, -5, 4, 2, -3, 1, 0, 9,
+						2, 1, 2, 1, 2, 3, 1, -8, 2, 95, 4, 8, 2, 1, 4, 0,
+						2, 9, 8, 9, 8, 7, 2, 6, 4, 2, 89, 2, 1, 8, 7, 9,
+						-5, -5, -4, -2, -1, 5, 4, 8, 7, 6, 5, 89, 0, 9, 3, 1,
+						1, 1, 3, 2, 8, 8, 9, 7, 3, -3, 4, 2, 79, 9, 0, -4,
+						2, 1, 3, -5, 8, 9, -2, 2, 1, 2, 3, -9, -3, 77, 1, 3,
+						-2, 1, 7, 8, 9, 2, 0, 1, -1, -1, 2, -3, 2, 4, 92, -4,
+						3, 2, -1, -1, -1, 0, 9, 8, 3, 4, 5, 3, 2, 1, 9, 90
+						};
+	avals[1] = avals1;
+	float bvals1[16] = {9, -8, 2, 9, -3, 2, 8, 7, 2, 1, 0, -3, 4, 5, -9, 1};
+	bvals[1] = bvals1;
+	float answers1[16] = {800, -575, 84, 787, -113, 311, 746, 702, 208, 27, 85, -158, 492, 361, -754, 154};
+	answers[1] = answers1;
 
 	int lN;
 	int lNT;
 	int lNB;
 	int lNK;
-	float* h_a;
-	float* h_b;
-	float* h_c;
-	float* d_a;
-	float* d_b;
-	float* d_c;
 	size_t size1;
 	size_t size2;
 	for(int i = 0; i < testNum; i++){
@@ -49,38 +78,32 @@ void multiplyMats2D1DTest(){
 		lNT = params[i][1];
 		lNB = params[i][2];
 		lNK = params[i][3];
-		dim3 threadPerBlock(lNT, 1);
+		dim3 threadPerBlock(lNT, lNT);
 		dim3 blockPerGrid(lNK, lNK);
 		
-		h_a = initMat2DHelper(false, true, lN);
-		h_b = initMat1DHelper(false, true, lN);
-		h_c = initMat1DHelper(false, true, lN);
-		
-		d_a = initMat2DHelper(false, false, lN);
-		d_b = initMat1DHelper(false, false, lN);
-		d_c = initMat1DHelper(false, false, lN);	
-
-		for(int j = 0; j < lN * lN; j++){
-			h_a[j] = j + 1;
-		}
-		for(int j = 0; j < lN; j++){
-			h_b[j] = j + 1;
-		}
+		float* h_c = initMat1DHelper(false, true, lN);
+		float* d_a = initMat2DHelper(false, false, lN);
+		float* d_b = initMat1DHelper(false, false, lN);
+		float* d_c = initMat1DHelper(false, false, lN);	
 
 		size1 = lN * lN * sizeof(float);
 		size2 = lN * sizeof(float);
 
-		cudaMemcpy(d_a, h_a, size1, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_b, h_b, size2, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_a, avals[i], size1, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_b, bvals[i], size2, cudaMemcpyHostToDevice);
 
 		multiplyMats2D1DTB<<<blockPerGrid, threadPerBlock>>>(d_a, d_b, d_c, lN, lNT, lNB);
 		cudaMemcpy(h_c, d_c, size2, cudaMemcpyDeviceToHost);
 		cudaDeviceSynchronize();
 		
 		for(int j = 0; j < lN; j++){
-			if(h_c[j] != answers[i][j]){
+			if(abs(h_c[j] - answers[i][j]) > .01){
 				printf("multiplyMats2D1D test failed\n");
+				printf("Currently is\n");
 				printMat1DHelper(h_c, lN);
+				printf("\n");
+				printf("Should be\n");
+				printMat1DHelper(answers[i], lN);
 				exit(1);
 			}
 		}
@@ -90,9 +113,16 @@ void multiplyMats2D1DTest(){
 void multiplyMats2DTest(){
 	int testNum = 1;
 	float** params = (float**) malloc(sizeof(float*) * testNum);
+	float** avals = (float**) malloc(sizeof(float*) * testNum);
+	float** bvals = (float**) malloc(sizeof(float*) * testNum);
 	float** answers = (float**) malloc(sizeof(float*) * testNum);
+	
 	float params0[4] = {3, 3, 1, 1};
 	params[0] = params0;
+	float avals0[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+	avals[0] = avals0;
+	float bvals0[9] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+	bvals[0] = bvals0;
 	float answer0[9] = {30, 36, 42, 66, 81, 96, 102, 126, 150};
 	answers[0] = answer0;
 
@@ -100,12 +130,6 @@ void multiplyMats2DTest(){
 	int lNT;
 	int lNB;
 	int lNK;
-	float* h_a;
-	float* h_b;
-	float* h_c;
-	float* d_a;
-	float* d_b;
-	float* d_c;
 	size_t size;
 	for(int i = 0; i < testNum; i++){
 		lN = params[i][0];
@@ -115,23 +139,15 @@ void multiplyMats2DTest(){
 		dim3 threadPerBlock(lNT, lNT);
 		dim3 blockPerGrid(lNK, lNK);
 		
-		h_a = initMat2DHelper(false, true, lN);
-		h_b = initMat2DHelper(false, true, lN);
-		h_c = initMat2DHelper(false, true, lN);
-		
-		d_a = initMat2DHelper(false, false, lN);
-		d_b = initMat2DHelper(false, false, lN);
-		d_c = initMat2DHelper(false, false, lN);	
-
-		for(int j = 0; j < lN * lN; j++){
-			h_a[j] = j + 1;
-			h_b[j] = j + 1;
-		}
+		float* h_c = initMat2DHelper(false, true, lN);
+		float* d_a = initMat2DHelper(false, false, lN);
+		float* d_b = initMat2DHelper(false, false, lN);
+		float* d_c = initMat2DHelper(false, false, lN);	
 
 		size = lN * lN * sizeof(float);
 
-		cudaMemcpy(d_a, h_a, size, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_b, h_b, size, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_a, avals[i], size, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_b, bvals[i], size, cudaMemcpyHostToDevice);
 
 		multiplyMats2DTB<<<blockPerGrid, threadPerBlock>>>(d_a, d_b, d_c, lN, lNT, lNB);
 		cudaMemcpy(h_c, d_c, size, cudaMemcpyDeviceToHost);
@@ -148,7 +164,7 @@ void multiplyMats2DTest(){
 }
 
 void jacobiMethodTest(){
-	int testNum = 1;
+	int testNum = 2;
 	float** params = (float**) malloc(sizeof(float*) * testNum);
 	float** avals = (float**) malloc(sizeof(float*) * testNum);
 	float** bvals = (float**) malloc(sizeof(float*) * testNum);
@@ -166,11 +182,41 @@ void jacobiMethodTest(){
 	float answer0[3] = {1, 2, -1};
 	answers[0] = answer0;
 
+	//Test 2
+	float params1[4] = {16, 4, 1, 4};
+	params[1] = params1;
+	float avals1[16 * 16] = {
+						90, 9, 6, 4, 1, -5, 3, 9, 0, -3, 1, 5, 7, -9, 3, 2,
+						3, 86, 4, 5, 7, 8, 3, 3, 4, 5, 6, 0, -3, 2, 3, 9,
+						-5, 2, 89, 1, 4, 5, -2, -8, 7, 3, 4, 5, 2, 1, -1, 8,
+						9, 9, 8, 69, -7, 2, 1, 8, 7, 2, 4, -9, 1, 1, 0, 0,
+						3, 4, 1, 8, 95, 6, 5, 9, 8, 7, 6, 5, 4, -2, 3, 1,
+						3, 2, 1, 8, 7, 87, 5, 2, 1, 4, 9, 8, 9, 2, 1, 0,
+						3, 4, 1, 2, 3, 4, 91, 1, 9, 8, 7, 6, 5, 6, 7, 2,
+						1, 1, 1, 3, 4, 2, 4, 92, 2, 1, -8, 2, 3, 2, 2, 1,
+						0, 0, 0, 1, 1, 3, -2, 5, 93, -5, 4, 2, -3, 1, 0, 9,
+						2, 1, 2, 1, 2, 3, 1, -8, 2, 95, 4, 8, 2, 1, 4, 0,
+						2, 9, 8, 9, 8, 7, 2, 6, 4, 2, 89, 2, 1, 8, 7, 9,
+						-5, -5, -4, -2, -1, 5, 4, 8, 7, 6, 5, 89, 0, 9, 3, 1,
+						1, 1, 3, 2, 8, 8, 9, 7, 3, -3, 4, 2, 79, 9, 0, -4,
+						2, 1, 3, -5, 8, 9, -2, 2, 1, 2, 3, -9, -3, 77, 1, 3,
+						-2, 1, 7, 8, 9, 2, 0, 1, -1, -1, 2, -3, 2, 4, 92, -4,
+						3, 2, -1, -1, -1, 0, 9, 8, 3, 4, 5, 3, 2, 1, 9, 90
+						};
+	avals[1] = avals1;
+	float bvals1[16] = {800, -575, 84, 787, -113, 311, 746, 702, 208, 27, 85, -158, 492, 361, -754, 154};
+	bvals[1] = bvals1;
+	float xvals1[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	xvals[1] = xvals1;
+	float answer1[16] = {9, -8, 2, 9, -3, 2, 8, 7, 2, 1, 0, -3, 4, 5, -9, 1};
+	answers[1] = answer1;
+
 	int lN;
 	int lNT;
 	int lNB;
 	int lNK;
-	for(int i = 0; i < testNum; i++){
+	for(int i = 1; i < testNum; i++){
+	//for(int i = 0; i < testNum; i++){
 		lN = params[i][0];
 		lNT = params[i][1];
 		lNB = params[i][2];
@@ -183,8 +229,12 @@ void jacobiMethodTest(){
 		for(int j = 0; j < lN; j++){
 			if(xvals[i][j] != answers[i][j]){
 				printf("Jacobi Method test failed\n");
+				printf("Currently is\n");
 				printMat1DHelper(xvals[i], lN);
-				//exit(1);
+				printf("\n");
+				printf("Should be\n");
+				printMat1DHelper(answers[i], lN);
+				exit(1);
 			}
 		}
 		printf("Time elapsed is %f\n", (double) (end - begin) / CLOCKS_PER_SEC);
