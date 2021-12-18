@@ -14,12 +14,17 @@ float* initMat2DHelper(bool init, int lN){
 		return m;
 	}
 	for(int i = 0; i < lN; i++){
+		int sum = 0;
+		int randNum = (rand() % 23) - 10;
 		for(int j = 0; j < lN; j++){
-			m[(i * lN) + j] = 5;
+			if(i != j){
+				m[(i * lN) + j] = randNum;
+				sum += randNum;
+			}
 		}
+		m[(i * lN) + i] = (rand() % 23) - 10 + sum;
 	}
 	return m;
-
 }
 
 float* initMat1D(bool init){

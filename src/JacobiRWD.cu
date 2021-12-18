@@ -21,9 +21,15 @@ float* initMat2DHelper(bool init, bool host, int size){
 		return m;
 	}
 	for(int i = 0; i < size; i++){
+		int max = 0;
+		int randNum = (rand() % 23) - 10;
 		for(int j = 0; j < size; j++){
-			m[(i * size) + j] = 5;
+			if(i != j){
+				m[(i * size) + j] = randNum;
+				max += randNum;
+			}
 		}
+		m[(i * size) + i] = (rand() % 23) - 10 + max;
 	}
 	return m;
 }
@@ -45,7 +51,7 @@ float* initMat1DHelper(bool init, bool host, int size){
 		return m;
 	}
 	for(int i = 0; i < size; i++){
-		m[i] = 5;
+		m[i] = (rand() % 23) - 10;
 	}
 	return m;
 }

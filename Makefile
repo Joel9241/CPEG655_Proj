@@ -1,7 +1,7 @@
 CC=gcc
 CCFLAGS=-I$(SRCDIR)/ -DN=2048
 GC=nvcc
-GCFLAGS=-I$(SRCDIR)/ -DN=2048 -DNT=2 -DNB=16 -DNK=64
+GCFLAGS=-I$(SRCDIR)/ -DN=2048 -DNT=32 -DNB=8 -DNK=8
 OBJDIR=obj
 SRCDIR=src
 TESTDIR=tests
@@ -45,4 +45,4 @@ $(OBJDIR)/JacobiRWD.o: $(SRCDIR)/JacobiRWD.cuh $(SRCDIR)/JacobiRWD.cu
 	mv JacobiRWD.o $(OBJDIR)/
 
 clean:
-	rm -rf $(OBJDIR)/*.o jacobi rwdTests cpuTests
+	rm -rf $(OBJDIR)/*.o jacobi jacobiRWD rwdTests cpuTests
