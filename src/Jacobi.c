@@ -1,144 +1,193 @@
 #include "Jacobi.h"
 
-Mat2D* initMat2D(bool init){
-	Mat2D* m = malloc(sizeof(Mat2D*));
-	m->size = N;
-	m->mat = malloc(sizeof(float) * N * N);
+float* initMat2D(bool init){
+	return initMat2DHelper(init, N);
+}
+
+float* initMat2DHelper(bool init, int lN){
+	float* m = malloc(sizeof(float) * lN * lN);
 	if(!init){
 		return m;
 	}
-	for(int i = 0; i < N; i++){
-		for(int j = 0; j < N; j++){
-			m->mat[(i * N) + j] = 5;
+	for(int i = 0; i < lN; i++){
+		for(int j = 0; j < lN; j++){
+			m[(i * lN) + j] = 5;
 		}
 	}
 	return m;
+
 }
 
-Mat1D* initMat1D(bool init){
-	Mat1D* m = malloc(sizeof(Mat1D*));
-	m->size = N;
-	m->mat = malloc(sizeof(float) * N);
+float* initMat1D(bool init){
+	return initMat1DHelper(init, N);
+}
+
+float* initMat1DHelper(bool init, int lN){
+	float* m = malloc(sizeof(float) * lN);
 	if(!init){
 		return m;
 	}
-	for(int i = 0; i < N; i++){
-		m->mat[i] = 5;
+	for(int i = 0; i < lN; i++){
+		m[i] = 5;
 	}
 	return m;
 }
 
-void printMat1D(Mat1D* mat){
-	for(int i = 0; i < N; i++){
-		printf("%f\n", mat->mat[i]);
-	}
-
+void printMat1D(float* mat){
+	printMat1DHelper(mat, N);
 }
-void printMat2D(Mat2D* mat){
-	for(int i = 0; i < N; i++){
-		for(int j = 0; j < N; j++){
-			printf("%f ", mat->mat[(i * N) + j]);
+
+void printMat1DHelper(float* mat, int lN){
+	for(int i = 0; i < lN; i++){
+		printf("%f\n", mat[i]);
+	}
+}
+
+void printMat2D(float* mat){
+	printMat2DHelper(mat, N);
+}
+
+void printMat2DHelper(float* mat, int lN){
+	for(int i = 0; i < lN; i++){
+		for(int j = 0; j < lN; j++){
+			printf("%f ", mat[(i * lN) + j]);
 		}
 		printf("\n");
 	}
 }
 
-Mat2D* multiplyMats2D(Mat2D* a, Mat2D* b){
-	Mat2D* c = initMat2D(false);
-	for(int i = 0; i < N; i++){
-		for(int j = 0; j < N; j++){
+float* multiplyMats2D(float* a, float* b){
+	return multiplyMats2DHelper(a, b, N);
+}
+
+float* multiplyMats2DHelper(float* a, float* b, int lN){
+	float* c = initMat2DHelper(false, lN);
+	for(int i = 0; i < lN; i++){
+		for(int j = 0; j < lN; j++){
 			float sum = 0;
-			for(int k = 0; k < N; k++){
-				float tmp1 = a->mat[(i * N) + k];
-				float tmp2 = b->mat[(k * N) + j];
+			for(int k = 0; k < lN; k++){
+				float tmp1 = a[(i * lN) + k];
+				float tmp2 = b[(k * lN) + j];
 				sum += tmp1 * tmp2;
 			}
-			c->mat[(i * N) + j] = sum;
+			c[(i * lN) + j] = sum;
 		}
 	}
 	return c;
 }
 
-Mat1D* multiplyMats2D1D(Mat2D* a, Mat1D* b){
-	Mat1D* c = initMat1D(false);
-	for(int i = 0; i < N; i++){
+float* multiplyMats2D1D(float* a, float* b){
+	return multiplyMats2D1DHelper(a, b, N);
+}
+
+float* multiplyMats2D1DHelper(float* a, float* b, int lN){
+	float* c = initMat1DHelper(false, lN);
+	for(int i = 0; i < lN; i++){
 		float sum = 0;
-		for(int k = 0; k < N; k++){
-			float tmp1 = a->mat[(i * N) + k];
-			float tmp2 = b->mat[k];
+		for(int k = 0; k < lN; k++){
+			float tmp1 = a[(i * lN) + k];
+			float tmp2 = b[k];
 			sum += tmp1 * tmp2;
 		}
-		c->mat[i] = sum;
+		c[i] = sum;
 	}
 	return c;
 }
 
-Mat2D* addMats2D(Mat2D* a, Mat2D* b){
-	Mat2D* c = initMat2D(false);
-	for(int i = 0; i < N * N; i++){
-		c->mat[i] = a->mat[i] + b->mat[i];
+float* addMats2D(float* a, float* b){
+	return addMats2DHelper(a, b, N);
+}
+
+float* addMats2DHelper(float* a, float* b, int lN){
+	float* c = initMat2DHelper(false, lN);
+	for(int i = 0; i < lN * lN; i++){
+		c[i] = a[i] + b[i];
 	}
 	return c;
 }
 
-Mat2D* subMats2D(Mat2D* a, Mat2D* b){
-	Mat2D* c = initMat2D(false);
-	for(int i = 0; i < N * N; i++){
-		c->mat[i] = a->mat[i] - b->mat[i];
+float* subMats2D(float* a, float* b){
+	return subMats2DHelper(a, b, N);
+}
+
+float* subMats2DHelper(float* a, float* b, int lN){
+	float* c = initMat2DHelper(false, lN);
+	for(int i = 0; i < lN * lN; i++){
+		c[i] = a[i] - b[i];
 	}
 	return c;
 }
 
-Mat1D* addMats1D(Mat1D* a, Mat1D* b){
-	Mat1D* c = initMat1D(false);
-	for(int i = 0; i < N; i++){
-		c->mat[i] = a->mat[i] + b->mat[i];
+float* addMats1D(float* a, float* b){
+	return addMats1DHelper(a, b, N);
+}
+
+float* addMats1DHelper(float* a, float* b, int lN){
+	float* c = initMat1DHelper(false, lN);
+	for(int i = 0; i < lN; i++){
+		c[i] = a[i] + b[i];
 	}
 	return c;
 }
 
-Mat1D* subMats1D(Mat1D* a, Mat1D* b){
-	Mat1D* c = initMat1D(false);
-	for(int i = 0; i < N; i++){
-		c->mat[i] = a->mat[i] - b->mat[i];
+float* subMats1D(float* a, float* b){
+	return subMats1DHelper(a, b, N);
+}
+
+float* subMats1DHelper(float* a, float* b, int lN){
+	float* c = initMat1DHelper(false, lN);
+	for(int i = 0; i < lN; i++){
+		c[i] = a[i] - b[i];
 	}
 	return c;
 }
 
-Mat1D* jacobiMethod(Mat2D* a, Mat1D* b, Mat1D* x){
-	Mat2D* dinv = initMat2D(false);
-	Mat2D* l = initMat2D(false);
-	Mat2D* u = initMat2D(false);
-	dluDecomp(a, dinv, l, u);
+float* jacobiMethod(float* a, float* b, float* x){
+	return jacobiMethodHelper(a, b, x, N);
+}
+
+float* jacobiMethodHelper(float* a, float* b, float* x, int lN){
+	float* dinv = initMat2DHelper(false, lN);
+	float* l = initMat2DHelper(false, lN);
+	float* u = initMat2DHelper(false, lN);
+	dluDecompHelper(a, dinv, l, u, lN);
 	int i = 0;
 	while(i < 25){
-		x = jacobiIterate(dinv, l, u, b, x);
+		x = jacobiIterateHelper(dinv, l, u, b, x, lN);
 		i++;
 	}
 	return x;
 }
 
-Mat1D* jacobiIterate(Mat2D* dinv, Mat2D* l, Mat2D* u, Mat1D* b, Mat1D* x){
-	Mat2D* lu = addMats2D(l, u);
-	Mat1D* lux = multiplyMats2D1D(lu, x);
-	Mat1D* blux = subMats1D(b, lux);
-	x = multiplyMats2D1D(dinv, blux);
+float* jacobiIterate(float* dinv, float* l, float* u, float* b, float* x){
+	return jacobiIterateHelper(dinv, l, u, b, x, N);
+}
+
+float* jacobiIterateHelper(float* dinv, float* l, float* u, float* b, float* x, int lN){
+	float* lu = addMats2DHelper(l, u, lN);
+	float* lux = multiplyMats2D1DHelper(lu, x, lN);
+	float* blux = subMats1DHelper(b, lux, lN);
+	x = multiplyMats2D1DHelper(dinv, blux, lN);
 	return x;
 }
 
-void dluDecomp(Mat2D* a, Mat2D* dinv, Mat2D* l, Mat2D* u){
-	for(int i = 0; i < N; i++){
-		for(int j = 0; j < N; j++){
+void dluDecomp(float* a, float* dinv, float* l, float* u){
+	dluDecompHelper(a, dinv, l, u, N);
+}
+
+void dluDecompHelper(float* a, float* dinv, float* l, float* u, int lN){
+	for(int i = 0; i < lN; i++){
+		for(int j = 0; j < lN; j++){
 			if(i == j){
-				dinv->mat[(i * N) + j] = 1 / a->mat[(i * N) + j];
+				dinv[(i * lN) + j] = 1 / a[(i * lN) + j];
 			}
 			else if(i > j){
-				dinv->mat[(i * N) + j] = 0;
-				l->mat[(i * N) + j] = a->mat[(i * N) + j];
+				dinv[(i * lN) + j] = 0;
+				l[(i * lN) + j] = a[(i * lN) + j];
 			}
 			else{
-				dinv->mat[(i * N) + j] = 0;
-				u->mat[(i * N) + j] = a->mat[(i * N) + j];
+				dinv[(i * lN) + j] = 0;
+				u[(i * lN) + j] = a[(i * lN) + j];
 			}
 		}
 	}

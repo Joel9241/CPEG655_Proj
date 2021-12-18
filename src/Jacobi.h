@@ -1,27 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
 
-typedef struct Mat1D {
-	int size;
-	float* mat;
-} Mat1D;
-
-typedef struct Mat2D {
-	int size;
-	float* mat;
-} Mat2D;
-
-Mat2D* initMat2D(bool init);
-Mat1D* initMat1D(bool init);
-void printMat1D(Mat1D* mat);
-void printMat2D(Mat2D* mat);
-Mat2D* multiplyMats2D(Mat2D* a, Mat2D* b);
-Mat1D* multiplyMats2D1D(Mat2D* a, Mat1D* b);
-Mat2D* addMats2D(Mat2D* a, Mat2D* b);
-Mat2D* subMats2D(Mat2D* a, Mat2D* b);
-Mat1D* addMats1D(Mat1D* a, Mat1D* b);
-Mat1D* subMats1D(Mat1D* a, Mat1D* b);
-Mat1D* jacobiMethod(Mat2D* a, Mat1D* b, Mat1D* x);
-Mat1D* jacobiIterate(Mat2D* dinv, Mat2D* l, Mat2D* u, Mat1D* b, Mat1D* x);
-void dluDecomp(Mat2D* a, Mat2D* dinv, Mat2D* l, Mat2D* u);
+float* initMat1D(bool init);
+float* initMat1DHelper(bool init, int lN);
+float* initMat2D(bool init);
+float* initMat2DHelper(bool init, int lN);
+void printMat1D(float* mat);
+void printMat1DHelper(float* mat, int lN);
+void printMat2D(float* mat);
+void printMat2DHelper(float* mat, int lN);
+float* multiplyMats2D(float* a, float* b);
+float* multiplyMats2DHelper(float* a, float* b, int lN);
+float* multiplyMats2D1D(float* a, float* b);
+float* multiplyMats2D1DHelper(float* a, float* b, int lN);
+float* addMats2D(float* a, float* b);
+float* addMats2DHelper(float* a, float* b, int lN);
+float* subMats2D(float* a, float* b);
+float* subMats2DHelper(float* a, float* b, int lN);
+float* addMats1D(float* a, float* b);
+float* addMats1DHelper(float* a, float* b, int lN);
+float* subMats1D(float* a, float* b);
+float* subMats1DHelper(float* a, float* b, int lN);
+float* jacobiMethod(float* a, float* b, float* x);
+float* jacobiMethodHelper(float* a, float* b, float* x, int lN);
+float* jacobiIterate(float* dinv, float* l, float* u, float* b, float* x);
+float* jacobiIterateHelper(float* dinv, float* l, float* u, float* b, float* x, int lN);
+void dluDecomp(float* a, float* dinv, float* l, float* u);
+void dluDecompHelper(float* a, float* dinv, float* l, float* u, int lN);
