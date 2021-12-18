@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <time.h>
 
+float* initX();
 float* initMat1D(bool init);
 float* initMat1DHelper(bool init, int lN);
 float* initMat2D(bool init);

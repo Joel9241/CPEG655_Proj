@@ -1,5 +1,9 @@
 #include "Jacobi.h"
 
+float* initX(){
+	return calloc(0, sizeof(float) * N);
+}
+
 float* initMat2D(bool init){
 	return initMat2DHelper(init, N);
 }

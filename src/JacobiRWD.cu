@@ -1,5 +1,9 @@
 #include "JacobiRWD.cuh"
 
+float* initX(){
+	return (float*) calloc(0, sizeof(float) * N);
+}
+
 float* initMat2D(bool init, bool host){
 	return initMat2DHelper(init, host, N);
 }
@@ -166,7 +170,7 @@ __device__ void subMatsHelper(float* a, float* b, float* c, int lN, int lNT, int
 	}
 }
 
-__host__ void jacobiMethod(float* a, float* b, float* x, float* dinv, float* l, float* u){
+__host__ void jacobiMethod(float* a, float* b, float* x){
 	jacobiMethodTB(a, b, x, N, NT, NB, NK);
 }
 

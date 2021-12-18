@@ -1,15 +1,18 @@
 CC=gcc
-CCFLAGS=-I$(SRCDIR)/ -DN=3
+CCFLAGS=-I$(SRCDIR)/ -DN=2048
 GC=nvcc
-GCFLAGS=-I$(SRCDIR)/ -DN=8 -DNT=8 -DNB=8 -DNK=8 -g
+GCFLAGS=-I$(SRCDIR)/ -DN=2048 -DNT=2 -DNB=16 -DNK=64
 OBJDIR=obj
 SRCDIR=src
 TESTDIR=tests
 
-all: jacobi cpuTests rwdTests
+all: jacobi jacobiRWD cpuTests rwdTests
 
 jacobi: $(OBJDIR)/Jacobi.o $(OBJDIR)/main.o
 	$(CC) $(CCFLAGS) $(OBJDIR)/Jacobi.o $(OBJDIR)/main.o -o jacobi
+
+jacobiRWD: $(OBJDIR)/JacobiRWD.o $(OBJDIR)/mainRWD.o
+	$(GC) $(GCFLAGS) $(OBJDIR)/JacobiRWD.o $(OBJDIR)/mainRWD.o -o jacobiRWD
 
 $(OBJDIR)/Jacobi.o: $(SRCDIR)/Jacobi.h $(SRCDIR)/Jacobi.c
 	$(CC) $(CCFLAGS) -c $(SRCDIR)/Jacobi.c
@@ -18,6 +21,10 @@ $(OBJDIR)/Jacobi.o: $(SRCDIR)/Jacobi.h $(SRCDIR)/Jacobi.c
 $(OBJDIR)/main.o: $(SRCDIR)/main.c
 	$(CC) $(CCFLAGS) -c $(SRCDIR)/main.c
 	mv main.o $(OBJDIR)/	
+
+$(OBJDIR)/mainRWD.o: $(SRCDIR)/mainRWD.cu
+	$(GC) $(GCFLAGS) -c $(SRCDIR)/mainRWD.cu
+	mv mainRWD.o $(OBJDIR)/	
 
 cpuTests: $(OBJDIR)/JacobiTests.o $(OBJDIR)/Jacobi.o
 	$(CC) $(CCFLAGS) $(OBJDIR)/JacobiTests.o $(OBJDIR)/Jacobi.o -o cpuTests

@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <time.h>
 
+float* initX();
 float* initMat2D(bool init, bool host);
 float* initMat2DHelper(bool init, bool host, int size);
 float* initMat2DHelper(bool init, bool host, int size);
@@ -29,7 +30,7 @@ __global__ void subMats2DTB(float* a, float* b, float* c, int lN, int lNT, int l
 __global__ void subMats1D(float* a, float* b, float* c);
 __global__ void subMats1DTB(float* a, float* b, float* c, int lN, int lNT, int lNB);
 __device__ void subMatsHelper(float* a, float* b, float* c, int lN, int lNT, int lNB);
-__host__ void jacobiMethod(float* a, float* b, float* x, float* dinv, float* l, float* u);
+__host__ void jacobiMethod(float* a, float* b, float* x);
 __host__ void jacobiMethodTB(float* a, float* b, float* x, int lN, int lNT, int lNB, int lNK);
 void dluDecomp(float* a, float* dinv, float* l, float* u);
 void dluDecompTB(float* a, float* dinv, float* l, float* u, int lN, int lNT, int lNB);
