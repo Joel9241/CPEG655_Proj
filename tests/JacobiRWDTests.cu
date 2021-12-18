@@ -67,6 +67,12 @@ void multiplyMats2D1DTest(){
 	float answers1[16] = {800, -575, 84, 787, -113, 311, 746, 702, 208, 27, 85, -158, 492, 361, -754, 154};
 	answers[1] = answers1;
 
+	//Test 3
+	float params2[4] = {16, 1, 2, 8};
+	params[1] = params2;
+	avals[2] = avals1;
+	answers[2] = answers1;
+
 	int lN;
 	int lNT;
 	int lNB;
@@ -164,7 +170,7 @@ void multiplyMats2DTest(){
 }
 
 void jacobiMethodTest(){
-	int testNum = 2;
+	int testNum = 3;
 	float** params = (float**) malloc(sizeof(float*) * testNum);
 	float** avals = (float**) malloc(sizeof(float*) * testNum);
 	float** bvals = (float**) malloc(sizeof(float*) * testNum);
@@ -208,15 +214,22 @@ void jacobiMethodTest(){
 	bvals[1] = bvals1;
 	float xvals1[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	xvals[1] = xvals1;
-	float answer1[16] = {9, -8, 2, 9, -3, 2, 8, 7, 2, 1, 0, -3, 4, 5, -9, 1};
-	answers[1] = answer1;
+	float answers1[16] = {9, -8, 2, 9, -3, 2, 8, 7, 2, 1, 0, -3, 4, 5, -9, 1};
+	answers[1] = answers1;
+
+	//Test 3
+	float params2[4] = {16, 1, 2, 8};
+	params[2] = params2;
+	avals[2] = avals1;
+	bvals[2] = bvals1;
+	xvals[2] = xvals1;
+	answers[2] = answers1;
 
 	int lN;
 	int lNT;
 	int lNB;
 	int lNK;
-	for(int i = 1; i < testNum; i++){
-	//for(int i = 0; i < testNum; i++){
+	for(int i = 0; i < testNum; i++){
 		lN = params[i][0];
 		lNT = params[i][1];
 		lNB = params[i][2];
@@ -227,7 +240,7 @@ void jacobiMethodTest(){
 		clock_t end = clock();
 		
 		for(int j = 0; j < lN; j++){
-			if(xvals[i][j] != answers[i][j]){
+			if(abs(xvals[i][j] - answers[i][j]) > .01){
 				printf("Jacobi Method test failed\n");
 				printf("Currently is\n");
 				printMat1DHelper(xvals[i], lN);
